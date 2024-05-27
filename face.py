@@ -1,6 +1,6 @@
 from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter
 import os
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -46,17 +46,13 @@ def extract_faces(image_path):
 
 def find_most_similar_face(img1_path, img2_path):
     try:
-        # img1의 폴더명 추출
         img1_folder_name = os.path.basename(os.path.dirname(img1_path))
-
-        # img1의 얼굴 임베딩 계산
         img1_tensor = load_image(img1_path)
         if img1_tensor is None:
             raise Exception('No face detected in img1.')
 
         img1_embedding = get_embedding(img1_tensor)
 
-        # img2에서 얼굴 검출 및 임베딩 계산
         faces_in_img2, original_img2 = extract_faces(img2_path)
         if not faces_in_img2:
             raise Exception('No faces detected in img2.')
@@ -74,19 +70,29 @@ def find_most_similar_face(img1_path, img2_path):
 
         print(f'The most similar face to img1 is face number: {most_similar_face_idx} in img2 with distance: {most_similar_distance}')
 
-        # img2에서 가장 유사한 얼굴에 바운딩 박스 그리기
         boxes, probs = mtcnn.detect(original_img2)
-        font_size = 20
-        font = ImageFont.truetype("arial.ttf", font_size)
-        draw = ImageDraw.Draw(original_img2)
-        for i, (box, prob) in enumerate(zip(boxes, probs)):
-            if i == most_similar_face_idx:
-                draw.rectangle(box.tolist(), outline='red', width=6)
-                draw.text((box[0], box[1] - font_size), img1_folder_name, fill='red', font=font)
-            else:
-                draw.rectangle(box.tolist(), outline='blue', width=2)
+        if boxes is None:
+            raise Exception('No faces detected when drawing boxes.')
 
-        return original_img2
+        blurred_img = original_img2.filter(ImageFilter.GaussianBlur(15))
+        draw = ImageDraw.Draw(original_img2)
+
+        for i, box in enumerate(boxes):
+            if i == most_similar_face_idx:
+                box = [int(b) for b in box]
+                expansion_factor = 0.2  # 박스를 20% 더 크게
+                box_width = box[2] - box[0]
+                box_height = box[3] - box[1]
+                box[0] -= int(box_width * expansion_factor)
+                box[1] -= int(box_height * expansion_factor)
+                box[2] += int(box_width * expansion_factor)
+                box[3] += int(box_height * expansion_factor)
+
+                draw.rectangle(box, outline='red', width=2)
+                region = original_img2.crop((box[0], box[1], box[2], box[3]))
+                blurred_img.paste(region, (box[0], box[1]))
+
+        return blurred_img
 
     except Exception as e:
         raise e
