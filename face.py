@@ -80,7 +80,7 @@ def find_most_similar_face(img1_path, img2_path):
         for i, box in enumerate(boxes):
             if i == most_similar_face_idx:
                 box = [int(b) for b in box]
-                expansion_factor = 0.2  # 박스를 20% 더 크게
+                expansion_factor = 0.2
                 box_width = box[2] - box[0]
                 box_height = box[3] - box[1]
                 box[0] -= int(box_width * expansion_factor)

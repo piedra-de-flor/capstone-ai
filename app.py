@@ -48,24 +48,21 @@ def upload_file():
 def upload_file_detect():
     if 'file1' not in request.files or 'file2' not in request.files:
         return jsonify({'error': 'No file part'}), 400
-    file1 = request.files['file1']
-    file2 = request.files['file2']
+    file1 = request.files['target']
+    file2 = request.files['cctv']
     if file1.filename == '' or file2.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
-    # Save the uploaded files
     img1_path = os.path.join('uploads', file1.filename)
     img2_path = os.path.join('uploads', file2.filename)
     file1.save(img1_path)
     file2.save(img2_path)
 
-    # Process the images using face.py
     try:
         result_image = face.find_most_similar_face(img1_path, img2_path)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-    # Save the result image to a byte array
     img_byte_arr = io.BytesIO()
     result_image.save(img_byte_arr, format='JPEG')
     img_byte_arr.seek(0)
