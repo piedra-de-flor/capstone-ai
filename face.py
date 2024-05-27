@@ -49,13 +49,13 @@ def find_most_similar_face(img1_path, img2_path):
         img1_folder_name = os.path.basename(os.path.dirname(img1_path))
         img1_tensor = load_image(img1_path)
         if img1_tensor is None:
-            raise Exception('No face detected in img1.')
+            return None
 
         img1_embedding = get_embedding(img1_tensor)
 
         faces_in_img2, original_img2 = extract_faces(img2_path)
         if not faces_in_img2:
-            raise Exception('No faces detected in img2.')
+            return None
 
         img2_embeddings = []
         for face in faces_in_img2:
@@ -72,7 +72,7 @@ def find_most_similar_face(img1_path, img2_path):
 
         boxes, probs = mtcnn.detect(original_img2)
         if boxes is None:
-            raise Exception('No faces detected when drawing boxes.')
+            return None
 
         blurred_img = original_img2.filter(ImageFilter.GaussianBlur(15))
         draw = ImageDraw.Draw(original_img2)
@@ -95,4 +95,5 @@ def find_most_similar_face(img1_path, img2_path):
         return blurred_img
 
     except Exception as e:
-        raise e
+        print(f'Error: {e}')
+        return None
