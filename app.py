@@ -46,10 +46,12 @@ def upload_file():
 
 @app.route('/detect', methods=['POST'])
 def upload_file_detect():
-    if 'file1' not in request.files or 'file2' not in request.files:
+    if 'cctv' not in request.files or 'target' not in request.files:
         return jsonify({'error': 'No file part'}), 400
+
     file1 = request.files['target']
     file2 = request.files['cctv']
+
     if file1.filename == '' or file2.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
