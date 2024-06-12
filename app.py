@@ -62,6 +62,8 @@ def upload_file_detect():
 
     try:
         result_image = face.find_most_similar_face(img1_path, img2_path)
+        if result_image is None:
+            return jsonify({'error': 'Face matching failed or no similar face found.'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
